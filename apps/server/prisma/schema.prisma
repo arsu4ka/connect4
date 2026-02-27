@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoomStatus {
+  waiting
+  active
+  finished
+}
+
+enum GameMode {
+  online
+  offline
+}
+
+enum GameStatus {
+  waiting
+  active
+  finished
+}
+
+enum DiscColor {
+  red
+  yellow
+}
+
+enum FinishReason {
+  win
+  draw
+  timeout
+  disconnect
+}
+
+enum TimeControlType {
+  none
+  clock
+}
+
+model Room {
+  id          String      @id @default(uuid())
+  inviteToken String      @unique
+  status      RoomStatus  @default(waiting)
+  createdAt   DateTime    @default(now())
+  startedAt   DateTime?
+  closedAt    DateTime?
+  games       Game[]
+}
+
+model Game {
+  id                String          @id @default(uuid())
+  roomId            String?
+  room              Room?           @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  mode              GameMode
+  status            GameStatus      @default(waiting)
+  timeControlType   TimeControlType
+  secondsPerPlayer  Int?
+  finishedReason    FinishReason?
+  winnerColor       DiscColor?
+  createdAt         DateTime        @default(now())
+  finishedAt        DateTime?
+  difficulty        String?
+  playerSeats       PlayerSeat[]
+  moves             Move[]
+  previousRematches Rematch[]       @relation("PrevGame")
+  newRematches      Rematch[]       @relation("NewGame")
+}
+
+model PlayerSeat {
+  id             String    @id @default(uuid())
+  gameId         String
+  game           Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  seat           String
+  color          DiscColor
+  isBot          Boolean   @default(false)
+  displayName    String
+  joinedAt       DateTime  @default(now())
+  disconnectedAt DateTime?
+
+  @@unique([gameId, seat])
+}
+
+model Move {
+  id                   String    @id @default(uuid())
+  gameId               String
+  game                 Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  moveNumber           Int
+  color                DiscColor
+  column               Int
+  row                  Int
+  playedAt             DateTime  @default(now())
+  timeLeftAfterMoveMs  Int?
+
+  @@unique([gameId, moveNumber])
+}
+
+model Rematch {
+  id            String   @id @default(uuid())
+  previousGameId String
+  previousGame   Game    @relation("PrevGame", fields: [previousGameId], references: [id], onDelete: Cascade)
+  newGameId      String
+  newGame        Game    @relation("NewGame", fields: [newGameId], references: [id], onDelete: Cascade)
+  colorsSwapped  Boolean @default(true)
+  createdAt      DateTime @default(now())
+
+  @@unique([previousGameId, newGameId])
+}

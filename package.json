@@ -1,0 +1,18 @@
+{
+  "name": "connect-four-monorepo",
+  "private": true,
+  "packageManager": "bun@1.2.5",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter @connect4/server dev & bun run --filter @connect4/client dev",
+    "dev:server": "bun run --filter @connect4/server dev",
+    "dev:client": "bun run --filter @connect4/client dev",
+    "build": "bun run --filter @connect4/shared build && bun run --filter @connect4/server build && bun run --filter @connect4/client build",
+    "test": "bun run --filter @connect4/server test",
+    "prisma:generate": "bun run --filter @connect4/server prisma:generate",
+    "prisma:migrate": "bun run --filter @connect4/server prisma:migrate"
+  }
+}
