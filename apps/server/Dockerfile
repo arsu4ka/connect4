@@ -12,4 +12,4 @@ RUN bun run --filter @connect4/server prisma:generate
 RUN bun run --filter @connect4/server build
 
 EXPOSE 3001
-CMD ["bun", "apps/server/dist/index.js"]
+CMD ["bun", "apps/server/dist/apps/server/src/index.js"]

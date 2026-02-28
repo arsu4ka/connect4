@@ -65,7 +65,6 @@ interface RoomSession {
   createdAt: number;
   currentGame?: ActiveGame;
   rematchVotes: Set<string>;
-  previousGameId?: string;
 }
 
 function randomToken(bytes = 12): string {
@@ -247,7 +246,7 @@ export class RoomManager {
     }
 
     if (event.type === 'request_rematch') {
-      void this.requestRematch(room, player);
+      this.requestRematch(room, player);
       return;
     }
 
@@ -296,7 +295,7 @@ export class RoomManager {
     return roomPlayerList(room).find((p) => p.token === token);
   }
 
-  private startGameIfReady(room: RoomSession): void {
+  private startGameIfReady(room: RoomSession, previousGameId?: string): void {
     if (!room.guest) return;
     if (room.currentGame && room.currentGame.status !== 'finished') return;
 
@@ -332,6 +331,7 @@ export class RoomManager {
     void this.persistence.createGame({
       id: gameId,
       roomId: room.id,
+      previousGameId,
       mode: 'online',
       timeControl: room.timeControl,
       seats: [
@@ -545,11 +545,9 @@ export class RoomManager {
     room.host.color = hostNewColor;
     room.guest.color = guestNewColor;
 
-    this.startGameIfReady(room);
+    this.startGameIfReady(room, previousGameId);
 
     if (!room.currentGame) return;
-
-    void this.persistence.createRematch(previousGameId, room.currentGame.gameId);
 
     this.broadcast(room, {
       type: 'rematch_started',

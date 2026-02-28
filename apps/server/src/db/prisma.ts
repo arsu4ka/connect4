@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../generated/prisma/client';
 import type { TimeControl } from '@connect4/shared';
 
 export interface SeatInput {
@@ -20,8 +21,14 @@ export interface MoveInput {
 export class Persistence {
   private prisma: PrismaClient;
 
-  constructor(prisma = new PrismaClient()) {
+  constructor(prisma = Persistence.createClient()) {
     this.prisma = prisma;
+  }
+
+  private static createClient(): PrismaClient {
+    const connectionString = process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/connect4';
+    const adapter = new PrismaPg({ connectionString });
+    return new PrismaClient({ adapter });
   }
 
   private async safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
@@ -61,6 +68,7 @@ export class Persistence {
   async createGame(params: {
     id: string;
     roomId?: string;
+    previousGameId?: string;
     mode: 'online' | 'offline';
     timeControl: TimeControl;
     difficulty?: string;
@@ -74,6 +82,7 @@ export class Persistence {
           data: {
             id: params.id,
             roomId: params.roomId,
+            previousGameId: params.previousGameId,
             mode: params.mode,
             status: 'active',
             difficulty: params.difficulty,
@@ -125,20 +134,6 @@ export class Persistence {
             finishedAt: new Date(),
             finishedReason: params.reason,
             winnerColor: params.winnerColor
-          }
-        }),
-      undefined
-    );
-  }
-
-  async createRematch(previousGameId: string, newGameId: string): Promise<void> {
-    await this.safe(
-      () =>
-        this.prisma.rematch.create({
-          data: {
-            previousGameId,
-            newGameId,
-            colorsSwapped: true
           }
         }),
       undefined

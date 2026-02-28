@@ -14,5 +14,9 @@
     "test": "bun run --filter @connect4/server test",
     "prisma:generate": "bun run --filter @connect4/server prisma:generate",
     "prisma:migrate": "bun run --filter @connect4/server prisma:migrate"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.9",
+    "@types/node": "^25.3.2"
   }
 }

@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client"
+  output     = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum RoomStatus {
@@ -55,6 +55,9 @@ model Game {
   id                String          @id @default(uuid())
   roomId            String?
   room              Room?           @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  previousGameId    String?
+  previousGame      Game?           @relation("GameRematchChain", fields: [previousGameId], references: [id], onDelete: SetNull)
+  rematches         Game[]          @relation("GameRematchChain")
   mode              GameMode
   status            GameStatus      @default(waiting)
   timeControlType   TimeControlType
@@ -66,8 +69,8 @@ model Game {
   difficulty        String?
   playerSeats       PlayerSeat[]
   moves             Move[]
-  previousRematches Rematch[]       @relation("PrevGame")
-  newRematches      Rematch[]       @relation("NewGame")
+
+  @@index([previousGameId])
 }
 
 model PlayerSeat {
@@ -96,16 +99,4 @@ model Move {
   timeLeftAfterMoveMs  Int?
 
   @@unique([gameId, moveNumber])
-}
-
-model Rematch {
-  id            String   @id @default(uuid())
-  previousGameId String
-  previousGame   Game    @relation("PrevGame", fields: [previousGameId], references: [id], onDelete: Cascade)
-  newGameId      String
-  newGame        Game    @relation("NewGame", fields: [newGameId], references: [id], onDelete: Cascade)
-  colorsSwapped  Boolean @default(true)
-  createdAt      DateTime @default(now())
-
-  @@unique([previousGameId, newGameId])
 }

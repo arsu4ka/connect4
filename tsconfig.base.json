@@ -11,7 +11,10 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "types": [],
+    "types": [
+      "@types/bun",
+      "@types/node"
+    ],
     "paths": {
       "@connect4/shared": ["packages/shared/src/index.ts"]
     }

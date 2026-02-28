@@ -8,7 +8,6 @@ class FakePersistence {
   async createGame(): Promise<void> {}
   async recordMove(): Promise<void> {}
   async finishGame(): Promise<void> {}
-  async createRematch(): Promise<void> {}
 }
 
 class FakeSocket {
