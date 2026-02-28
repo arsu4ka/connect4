@@ -27,6 +27,7 @@ export function OnlineGamePage() {
     const socket = new RoomSocket(roomId, {
       onOpen: () => {
         setConnected(true);
+        // Keep legacy auth event for backward compatibility with older servers.
         socket.send({ type: 'join_room', playerToken });
       },
       onClose: () => setConnected(false),
@@ -38,10 +39,11 @@ export function OnlineGamePage() {
         }
 
         if ('state' in event) {
+          setError(null);
           setState(event.state);
         }
       }
-    });
+    }, { playerToken });
     socketRef.current = socket;
 
     return () => {

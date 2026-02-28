@@ -11,9 +11,15 @@ export class RoomSocket {
       onOpen?: () => void;
       onClose?: () => void;
       onError?: () => void;
+    },
+    options?: {
+      playerToken?: string;
     }
   ) {
-    this.ws = new WebSocket(`${wsBaseUrl()}/ws/rooms/${roomId}`);
+    const tokenQuery = options?.playerToken
+      ? `?playerToken=${encodeURIComponent(options.playerToken)}`
+      : '';
+    this.ws = new WebSocket(`${wsBaseUrl()}/ws/rooms/${encodeURIComponent(roomId)}${tokenQuery}`);
 
     this.ws.addEventListener('open', () => this.handlers.onOpen?.());
     this.ws.addEventListener('close', () => this.handlers.onClose?.());
