@@ -94,7 +94,11 @@ export class RoomManager {
   private publicBaseUrl: string;
   private disconnectTimeoutMs: number;
 
-  constructor(params: { persistence: Persistence; publicBaseUrl: string; disconnectTimeoutSeconds: number }) {
+  constructor(params: {
+    persistence: Persistence;
+    publicBaseUrl: string;
+    disconnectTimeoutSeconds: number;
+  }) {
     this.persistence = params.persistence;
     this.publicBaseUrl = params.publicBaseUrl.replace(/\/$/, '');
     this.disconnectTimeoutMs = params.disconnectTimeoutSeconds * 1000;
@@ -262,7 +266,9 @@ export class RoomManager {
       if (!game || game.status !== 'active') continue;
 
       if (game.paused && game.disconnectDeadlineAt && now >= game.disconnectDeadlineAt) {
-        const disconnected = roomPlayerList(room).find((player) => player.id === game.disconnectPlayerId);
+        const disconnected = roomPlayerList(room).find(
+          (player) => player.id === game.disconnectPlayerId
+        );
         if (!disconnected) continue;
         void this.finishGame(room, 'disconnect', oppositeColor(disconnected.color));
         continue;
@@ -317,7 +323,10 @@ export class RoomManager {
       timeControl: room.timeControl,
       timeLeftMs:
         room.timeControl.type === 'clock'
-          ? { red: room.timeControl.secondsPerPlayer * 1000, yellow: room.timeControl.secondsPerPlayer * 1000 }
+          ? {
+              red: room.timeControl.secondsPerPlayer * 1000,
+              yellow: room.timeControl.secondsPerPlayer * 1000
+            }
           : undefined,
       turnStartedAt: now,
       paused: false,
@@ -356,7 +365,10 @@ export class RoomManager {
     });
   }
 
-  private effectiveTimeLeft(game: ActiveGame, now = Date.now()): Record<DiscColor, number> | undefined {
+  private effectiveTimeLeft(
+    game: ActiveGame,
+    now = Date.now()
+  ): Record<DiscColor, number> | undefined {
     if (!game.timeLeftMs) return undefined;
     if (game.status !== 'active' || game.paused) return { ...game.timeLeftMs };
 
@@ -432,7 +444,11 @@ export class RoomManager {
     player.socket.send(JSON.stringify(event));
   }
 
-  private broadcastState(room: RoomSession, type: Extract<ServerEvent['type'], 'room_state' | 'move_applied' | 'timer_update'>, now = Date.now()): void {
+  private broadcastState(
+    room: RoomSession,
+    type: Extract<ServerEvent['type'], 'room_state' | 'move_applied' | 'timer_update'>,
+    now = Date.now()
+  ): void {
     const event: ServerEvent = {
       type,
       state: this.toGameState(room, now)

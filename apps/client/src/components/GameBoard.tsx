@@ -39,7 +39,10 @@ export function GameBoard({
               {board.map((row, rowIdx) => {
                 const cell = row[col];
                 return (
-                  <div key={`${rowIdx}-${col}`} className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-900/45">
+                  <div
+                    key={`${rowIdx}-${col}`}
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-900/45"
+                  >
                     {cell ? (
                       <motion.div
                         initial={{ y: -200, opacity: 0.1 }}

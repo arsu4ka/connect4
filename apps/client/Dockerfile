@@ -10,7 +10,6 @@ COPY packages/shared/package.json packages/shared/
 RUN bun install
 
 COPY . .
-RUN bun run --filter @connect4/shared build
 RUN bun run --filter @connect4/client build
 
 EXPOSE 4173

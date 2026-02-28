@@ -16,7 +16,13 @@ interface OfflineState {
   playerColor: DiscColor;
   botColor: DiscColor;
   moveCount: number;
-  moves: Array<{ moveNumber: number; color: DiscColor; column: number; row: number; playedAt: string }>;
+  moves: Array<{
+    moveNumber: number;
+    color: DiscColor;
+    column: number;
+    row: number;
+    playedAt: string;
+  }>;
 }
 
 function pickPlayerColor(pref: PreferredColor): DiscColor {
@@ -194,12 +200,17 @@ export function OfflinePage() {
             <p>Ход: {game.currentTurnColor.toUpperCase()}</p>
             <p className="mt-2 font-semibold">{summaryText}</p>
             {botThinking ? <p className="text-slate-200/90">Компьютер думает...</p> : null}
-            {savedGameId ? <p className="mt-2 text-emerald-200">Матч сохранен: {savedGameId}</p> : null}
+            {savedGameId ? (
+              <p className="mt-2 text-emerald-200">Матч сохранен: {savedGameId}</p>
+            ) : null}
             {saveError ? <p className="mt-2 text-red-200">{saveError}</p> : null}
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button className="rounded-xl bg-p2 px-3 py-2 font-semibold text-slate-900" onClick={() => startGame()}>
+            <button
+              className="rounded-xl bg-p2 px-3 py-2 font-semibold text-slate-900"
+              onClick={() => startGame()}
+            >
               Новая игра
             </button>
             <button

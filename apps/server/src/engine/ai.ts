@@ -41,25 +41,47 @@ function evaluateBoard(board: CellValue[][], aiColor: DiscColor): number {
 
   for (let row = 0; row < board.length; row += 1) {
     for (let col = 0; col < BOARD_COLS - 3; col += 1) {
-      score += scoreWindow([board[row][col], board[row][col + 1], board[row][col + 2], board[row][col + 3]], aiColor);
+      score += scoreWindow(
+        [board[row][col], board[row][col + 1], board[row][col + 2], board[row][col + 3]],
+        aiColor
+      );
     }
   }
 
   for (let row = 0; row < board.length - 3; row += 1) {
     for (let col = 0; col < BOARD_COLS; col += 1) {
-      score += scoreWindow([board[row][col], board[row + 1][col], board[row + 2][col], board[row + 3][col]], aiColor);
+      score += scoreWindow(
+        [board[row][col], board[row + 1][col], board[row + 2][col], board[row + 3][col]],
+        aiColor
+      );
     }
   }
 
   for (let row = 0; row < board.length - 3; row += 1) {
     for (let col = 0; col < BOARD_COLS - 3; col += 1) {
-      score += scoreWindow([board[row][col], board[row + 1][col + 1], board[row + 2][col + 2], board[row + 3][col + 3]], aiColor);
+      score += scoreWindow(
+        [
+          board[row][col],
+          board[row + 1][col + 1],
+          board[row + 2][col + 2],
+          board[row + 3][col + 3]
+        ],
+        aiColor
+      );
     }
   }
 
   for (let row = 0; row < board.length - 3; row += 1) {
     for (let col = 3; col < BOARD_COLS; col += 1) {
-      score += scoreWindow([board[row][col], board[row + 1][col - 1], board[row + 2][col - 2], board[row + 3][col - 3]], aiColor);
+      score += scoreWindow(
+        [
+          board[row][col],
+          board[row + 1][col - 1],
+          board[row + 2][col - 2],
+          board[row + 3][col - 3]
+        ],
+        aiColor
+      );
     }
   }
 
@@ -140,7 +162,11 @@ function minimax(
   return { score: value, column: bestColumn };
 }
 
-export function pickAIMove(board: CellValue[][], aiColor: DiscColor, difficulty: Difficulty): number {
+export function pickAIMove(
+  board: CellValue[][],
+  aiColor: DiscColor,
+  difficulty: Difficulty
+): number {
   const valid = getValidColumns(board);
   if (valid.length === 0) return -1;
 
@@ -161,6 +187,13 @@ export function pickAIMove(board: CellValue[][], aiColor: DiscColor, difficulty:
     if (findWinLine(moved.board, moved.row, moved.col, opponent)) return col;
   }
 
-  const { column } = minimax(board, difficultyDepth[difficulty], -Infinity, Infinity, true, aiColor);
+  const { column } = minimax(
+    board,
+    difficultyDepth[difficulty],
+    -Infinity,
+    Infinity,
+    true,
+    aiColor
+  );
   return column ?? valid[0];
 }

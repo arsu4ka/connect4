@@ -24,26 +24,30 @@ export function OnlineGamePage() {
   useEffect(() => {
     if (!roomId || !playerToken) return;
 
-    const socket = new RoomSocket(roomId, {
-      onOpen: () => {
-        setConnected(true);
-        // Keep legacy auth event for backward compatibility with older servers.
-        socket.send({ type: 'join_room', playerToken });
-      },
-      onClose: () => setConnected(false),
-      onError: () => setConnected(false),
-      onEvent: (event: ServerEvent) => {
-        if (event.type === 'error_event') {
-          setError(event.message);
-          return;
-        }
+    const socket = new RoomSocket(
+      roomId,
+      {
+        onOpen: () => {
+          setConnected(true);
+          // Keep legacy auth event for backward compatibility with older servers.
+          socket.send({ type: 'join_room', playerToken });
+        },
+        onClose: () => setConnected(false),
+        onError: () => setConnected(false),
+        onEvent: (event: ServerEvent) => {
+          if (event.type === 'error_event') {
+            setError(event.message);
+            return;
+          }
 
-        if ('state' in event) {
-          setError(null);
-          setState(event.state);
+          if ('state' in event) {
+            setError(null);
+            setState(event.state);
+          }
         }
-      }
-    }, { playerToken });
+      },
+      { playerToken }
+    );
     socketRef.current = socket;
 
     return () => {
@@ -94,7 +98,10 @@ export function OnlineGamePage() {
             {state?.disconnectDeadlineAt ? <p>Таймаут дисконнекта активен</p> : null}
           </div>
 
-          <TimerPanel activeColor={state?.currentTurnColor ?? myColor} timeLeftMs={state?.timeLeftMs} />
+          <TimerPanel
+            activeColor={state?.currentTurnColor ?? myColor}
+            timeLeftMs={state?.timeLeftMs}
+          />
 
           {inviteUrl && state?.status === 'waiting' ? (
             <button
@@ -121,8 +128,16 @@ export function OnlineGamePage() {
 
         <GlassCard>
           <GameBoard
-            board={state?.board ?? Array.from({ length: 6 }, () => Array(7).fill(null as DiscColor | null))}
-            disabled={!state || state.status !== 'active' || state.currentTurnColor !== myColor || Boolean(state.paused)}
+            board={
+              state?.board ??
+              Array.from({ length: 6 }, () => Array(7).fill(null as DiscColor | null))
+            }
+            disabled={
+              !state ||
+              state.status !== 'active' ||
+              state.currentTurnColor !== myColor ||
+              Boolean(state.paused)
+            }
             hoveredColumn={hoveredColumn}
             onHoverColumn={setHoveredColumn}
             winLine={state?.winLine}

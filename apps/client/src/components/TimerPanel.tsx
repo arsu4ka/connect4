@@ -27,7 +27,9 @@ export function TimerPanel({
         <p className="text-xs uppercase tracking-wide">Red</p>
         <p className="font-display text-2xl leading-none">{msToClock(timeLeftMs.red)}</p>
       </div>
-      <div className={`rounded-2xl p-3 ${activeColor === 'yellow' ? 'bg-p2/90 text-slate-900' : 'bg-white/20'}`}>
+      <div
+        className={`rounded-2xl p-3 ${activeColor === 'yellow' ? 'bg-p2/90 text-slate-900' : 'bg-white/20'}`}
+      >
         <p className="text-xs uppercase tracking-wide">Yellow</p>
         <p className="font-display text-2xl leading-none">{msToClock(timeLeftMs.yellow)}</p>
       </div>

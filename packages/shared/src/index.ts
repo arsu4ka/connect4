@@ -3,9 +3,7 @@ export type CellValue = DiscColor | null;
 
 export type PreferredColor = DiscColor | 'random';
 
-export type TimeControl =
-  | { type: 'none' }
-  | { type: 'clock'; secondsPerPlayer: number };
+export type TimeControl = { type: 'none' } | { type: 'clock'; secondsPerPlayer: number };
 
 export type GameMode = 'online' | 'offline';
 
@@ -80,7 +78,13 @@ export interface SaveOfflineGameRequest {
   timeControl: TimeControl;
   finishedReason: FinishReason;
   winnerColor: DiscColor | null;
-  moves: Array<{ moveNumber: number; color: DiscColor; column: number; row: number; playedAt: string }>;
+  moves: Array<{
+    moveNumber: number;
+    color: DiscColor;
+    column: number;
+    row: number;
+    playedAt: string;
+  }>;
 }
 
 export type ClientEvent =

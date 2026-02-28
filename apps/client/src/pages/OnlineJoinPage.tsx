@@ -46,7 +46,11 @@ export function OnlineJoinPage() {
         <h1 className="font-display text-4xl">Присоединиться к игре</h1>
 
         {loading ? <p>Проверяем ссылку...</p> : null}
-        {!loading && !valid ? <p className="rounded-xl bg-red-500/20 p-3">Ссылка недействительна или уже использована.</p> : null}
+        {!loading && !valid ? (
+          <p className="rounded-xl bg-red-500/20 p-3">
+            Ссылка недействительна или уже использована.
+          </p>
+        ) : null}
 
         {!loading && valid ? (
           <>
@@ -58,7 +62,11 @@ export function OnlineJoinPage() {
               className="w-full rounded-xl border border-white/30 bg-black/20 px-3 py-2"
             />
             {error ? <p className="text-red-200">{error}</p> : null}
-            <button onClick={onJoin} disabled={joining} className="rounded-xl bg-p2 px-4 py-2 font-semibold text-slate-900">
+            <button
+              onClick={onJoin}
+              disabled={joining}
+              className="rounded-xl bg-p2 px-4 py-2 font-semibold text-slate-900"
+            >
               {joining ? 'Подключаем...' : 'Войти в матч'}
             </button>
           </>

@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "prisma generate && bun run --watch src/index.ts",
-    "build": "prisma generate && tsc -p tsconfig.json",
+    "start": "prisma generate && bun src/index.ts",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
+    "build": "bun run typecheck",
     "test": "prisma generate && vitest run",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

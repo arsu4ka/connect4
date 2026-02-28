@@ -29,7 +29,10 @@ export async function previewInvite(inviteToken: string): Promise<InvitePreviewR
   return parseJson<InvitePreviewResponse>(res);
 }
 
-export async function joinInvite(inviteToken: string, displayName?: string): Promise<JoinInviteResponse> {
+export async function joinInvite(
+  inviteToken: string,
+  displayName?: string
+): Promise<JoinInviteResponse> {
   const res = await fetch(`${API_BASE_URL}/api/invite/${inviteToken}/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,7 +41,9 @@ export async function joinInvite(inviteToken: string, displayName?: string): Pro
   return parseJson<JoinInviteResponse>(res);
 }
 
-export async function saveOfflineGame(payload: SaveOfflineGameRequest): Promise<{ gameId: string }> {
+export async function saveOfflineGame(
+  payload: SaveOfflineGameRequest
+): Promise<{ gameId: string }> {
   const res = await fetch(`${API_BASE_URL}/api/offline/games`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

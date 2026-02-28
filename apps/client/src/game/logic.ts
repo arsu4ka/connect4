@@ -45,7 +45,12 @@ export function isDraw(board: CellValue[][]): boolean {
   return validColumns(board).length === 0;
 }
 
-export function findWinLine(board: CellValue[][], row: number, col: number, color: DiscColor): WinLine | null {
+export function findWinLine(
+  board: CellValue[][],
+  row: number,
+  col: number,
+  color: DiscColor
+): WinLine | null {
   const dirs: Array<[number, number]> = [
     [0, 1],
     [1, 0],

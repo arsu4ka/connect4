@@ -90,7 +90,11 @@ function minimax(
   return { score: best, col: bestCol };
 }
 
-export function pickAIMove(board: CellValue[][], aiColor: DiscColor, difficulty: Difficulty): number {
+export function pickAIMove(
+  board: CellValue[][],
+  aiColor: DiscColor,
+  difficulty: Difficulty
+): number {
   const valid = validColumns(board);
   if (valid.length === 0) return -1;
 

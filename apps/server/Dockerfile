@@ -7,9 +7,8 @@ COPY packages/shared/package.json packages/shared/
 RUN bun install
 
 COPY . .
-RUN bun run --filter @connect4/shared build
 RUN bun run --filter @connect4/server prisma:generate
-RUN bun run --filter @connect4/server build
+RUN bun run --filter @connect4/server typecheck
 
 EXPOSE 3001
-CMD ["bun", "apps/server/dist/apps/server/src/index.js"]
+CMD ["bun", "apps/server/src/index.ts"]

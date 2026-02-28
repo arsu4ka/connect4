@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { TimeControl } from '@connect4/shared';
 import { RoomManager } from './room-manager';
 
 class FakePersistence {
@@ -18,7 +17,7 @@ class FakeSocket {
   }
 }
 
-function manager(timeControl: TimeControl = { type: 'clock', secondsPerPlayer: 5 }): RoomManager {
+function manager(): RoomManager {
   return new RoomManager({
     persistence: new FakePersistence() as never,
     publicBaseUrl: 'http://localhost:5173',
@@ -46,7 +45,7 @@ describe('room manager', () => {
   });
 
   it('finishes game on disconnect timeout', async () => {
-    const rm = manager({ type: 'none' });
+    const rm = manager();
     const room = await rm.createRoom({ preferredColor: 'red', timeControl: { type: 'none' } });
     const join = rm.joinByInvite(room.inviteToken);
     expect(join).not.toBeNull();
@@ -67,7 +66,7 @@ describe('room manager', () => {
   });
 
   it('swaps colors after rematch', async () => {
-    const rm = manager({ type: 'none' });
+    const rm = manager();
     const room = await rm.createRoom({ preferredColor: 'red', timeControl: { type: 'none' } });
     const join = rm.joinByInvite(room.inviteToken);
     expect(join).not.toBeNull();
@@ -100,8 +99,11 @@ describe('room manager', () => {
   });
 
   it('finishes on chess-clock timeout', async () => {
-    const rm = manager({ type: 'clock', secondsPerPlayer: 1 });
-    const room = await rm.createRoom({ preferredColor: 'red', timeControl: { type: 'clock', secondsPerPlayer: 1 } });
+    const rm = manager();
+    const room = await rm.createRoom({
+      preferredColor: 'red',
+      timeControl: { type: 'clock', secondsPerPlayer: 1 }
+    });
     const join = rm.joinByInvite(room.inviteToken);
     expect(join).not.toBeNull();
 

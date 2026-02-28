@@ -75,7 +75,10 @@ const app = new Elysia()
         preferredColor: t.Union([t.Literal('red'), t.Literal('yellow'), t.Literal('random')]),
         timeControl: t.Union([
           t.Object({ type: t.Literal('none') }),
-          t.Object({ type: t.Literal('clock'), secondsPerPlayer: t.Number({ minimum: 10, maximum: 3600 }) })
+          t.Object({
+            type: t.Literal('clock'),
+            secondsPerPlayer: t.Number({ minimum: 10, maximum: 3600 })
+          })
         ]),
         displayName: t.Optional(t.String({ minLength: 1, maxLength: 30 }))
       })
@@ -131,7 +134,12 @@ const app = new Elysia()
           t.Object({ type: t.Literal('none') }),
           t.Object({ type: t.Literal('clock'), secondsPerPlayer: t.Number() })
         ]),
-        finishedReason: t.Union([t.Literal('win'), t.Literal('draw'), t.Literal('timeout'), t.Literal('disconnect')]),
+        finishedReason: t.Union([
+          t.Literal('win'),
+          t.Literal('draw'),
+          t.Literal('timeout'),
+          t.Literal('disconnect')
+        ]),
         winnerColor: t.Union([t.Literal('red'), t.Literal('yellow'), t.Null()]),
         moves: t.Array(
           t.Object({

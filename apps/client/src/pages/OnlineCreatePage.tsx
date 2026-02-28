@@ -22,7 +22,9 @@ export function OnlineCreatePage() {
     setLoading(true);
     setError(null);
 
-    const timeControl: TimeControl = timerEnabled ? { type: 'clock', secondsPerPlayer: seconds } : { type: 'none' };
+    const timeControl: TimeControl = timerEnabled
+      ? { type: 'clock', secondsPerPlayer: seconds }
+      : { type: 'none' };
 
     try {
       const room = await createRoom({
@@ -77,7 +79,11 @@ export function OnlineCreatePage() {
 
           <div className="space-y-2 rounded-2xl border border-white/25 p-3">
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={timerEnabled} onChange={(e) => setTimerEnabled(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={timerEnabled}
+                onChange={(e) => setTimerEnabled(e.target.checked)}
+              />
               <span>Контроль времени</span>
             </label>
 
@@ -96,7 +102,9 @@ export function OnlineCreatePage() {
             ) : null}
           </div>
 
-          {error ? <p className="rounded-xl bg-red-500/20 p-2 text-sm text-red-100">{error}</p> : null}
+          {error ? (
+            <p className="rounded-xl bg-red-500/20 p-2 text-sm text-red-100">{error}</p>
+          ) : null}
 
           <div className="flex gap-3">
             <button

@@ -1,0 +1,6 @@
+node_modules
+**/dist
+**/.vite
+coverage
+apps/server/src/generated
+apps/server/prisma/migrations

@@ -25,7 +25,11 @@ export function findAvailableRow(board: CellValue[][], col: number): number {
   return -1;
 }
 
-export function applyMove(board: CellValue[][], col: number, color: DiscColor): { board: CellValue[][]; row: number; col: number } | null {
+export function applyMove(
+  board: CellValue[][],
+  col: number,
+  color: DiscColor
+): { board: CellValue[][]; row: number; col: number } | null {
   const row = findAvailableRow(board, col);
   if (row === -1) return null;
   const next = cloneBoard(board);
@@ -58,7 +62,12 @@ function scanDirection(
   return cells;
 }
 
-export function findWinLine(board: CellValue[][], lastRow: number, lastCol: number, color: DiscColor): WinLine | null {
+export function findWinLine(
+  board: CellValue[][],
+  lastRow: number,
+  lastCol: number,
+  color: DiscColor
+): WinLine | null {
   const directions: Array<[number, number]> = [
     [0, 1],
     [1, 0],

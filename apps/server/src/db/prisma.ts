@@ -26,7 +26,8 @@ export class Persistence {
   }
 
   private static createClient(): PrismaClient {
-    const connectionString = process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/connect4';
+    const connectionString =
+      process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/connect4';
     const adapter = new PrismaPg({ connectionString });
     return new PrismaClient({ adapter });
   }
@@ -87,7 +88,8 @@ export class Persistence {
             status: 'active',
             difficulty: params.difficulty,
             timeControlType,
-            secondsPerPlayer: params.timeControl.type === 'clock' ? params.timeControl.secondsPerPlayer : null,
+            secondsPerPlayer:
+              params.timeControl.type === 'clock' ? params.timeControl.secondsPerPlayer : null,
             playerSeats: {
               create: params.seats.map((seat) => ({
                 seat: seat.seat,
@@ -150,51 +152,49 @@ export class Persistence {
     playerColor: 'red' | 'yellow';
     moves: MoveInput[];
   }): Promise<void> {
-    await this.safe(
-      async () => {
-        const timeControlType = params.timeControl.type;
-        await this.prisma.game.create({
-          data: {
-            id: params.gameId,
-            mode: 'offline',
-            status: 'finished',
-            difficulty: params.difficulty,
-            timeControlType,
-            secondsPerPlayer: params.timeControl.type === 'clock' ? params.timeControl.secondsPerPlayer : null,
-            finishedReason: params.finishedReason,
-            winnerColor: params.winnerColor,
-            finishedAt: new Date(),
-            playerSeats: {
-              create: [
-                {
-                  seat: 'p1',
-                  color: params.playerColor,
-                  isBot: false,
-                  displayName: params.playerName
-                },
-                {
-                  seat: 'p2',
-                  color: params.playerColor === 'red' ? 'yellow' : 'red',
-                  isBot: true,
-                  displayName: 'Computer'
-                }
-              ]
-            },
-            moves: {
-              create: params.moves.map((move) => ({
-                moveNumber: move.moveNumber,
-                color: move.color,
-                column: move.column,
-                row: move.row,
-                playedAt: move.playedAt,
-                timeLeftAfterMoveMs: move.timeLeftAfterMoveMs
-              }))
-            }
+    await this.safe(async () => {
+      const timeControlType = params.timeControl.type;
+      await this.prisma.game.create({
+        data: {
+          id: params.gameId,
+          mode: 'offline',
+          status: 'finished',
+          difficulty: params.difficulty,
+          timeControlType,
+          secondsPerPlayer:
+            params.timeControl.type === 'clock' ? params.timeControl.secondsPerPlayer : null,
+          finishedReason: params.finishedReason,
+          winnerColor: params.winnerColor,
+          finishedAt: new Date(),
+          playerSeats: {
+            create: [
+              {
+                seat: 'p1',
+                color: params.playerColor,
+                isBot: false,
+                displayName: params.playerName
+              },
+              {
+                seat: 'p2',
+                color: params.playerColor === 'red' ? 'yellow' : 'red',
+                isBot: true,
+                displayName: 'Computer'
+              }
+            ]
+          },
+          moves: {
+            create: params.moves.map((move) => ({
+              moveNumber: move.moveNumber,
+              color: move.color,
+              column: move.column,
+              row: move.row,
+              playedAt: move.playedAt,
+              timeLeftAfterMoveMs: move.timeLeftAfterMoveMs
+            }))
           }
-        });
-      },
-      undefined
-    );
+        }
+      });
+    }, undefined);
   }
 
   async getGameById(gameId: string): Promise<unknown | null> {
