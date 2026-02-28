@@ -1,5 +1,5 @@
 {
-  "name": "connect-four-monorepo",
+  "name": "connect4",
   "private": true,
   "packageManager": "bun@1.2.5",
   "workspaces": [
