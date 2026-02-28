@@ -1,0 +1,8 @@
+{$DOMAIN:connect4.bschold.meme} {
+  encode zstd gzip
+
+  @backend path /api* /ws* /health
+  reverse_proxy @backend server:3001
+
+  reverse_proxy client:4173
+}
