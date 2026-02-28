@@ -18,20 +18,18 @@ export function TimerPanel({
   timeLeftMs?: Record<DiscColor, number>;
 }) {
   if (!timeLeftMs) {
-    return <p className="text-sm text-slate-100/80">Без контроля времени</p>;
+    return <p className="text-sm text-slate-200/80">No time control</p>;
   }
 
   return (
     <div className="grid grid-cols-2 gap-3 text-white">
-      <div className={`rounded-2xl p-3 ${activeColor === 'red' ? 'bg-p1/90' : 'bg-white/20'}`}>
-        <p className="text-xs uppercase tracking-wide">Red</p>
-        <p className="font-display text-2xl leading-none">{msToClock(timeLeftMs.red)}</p>
+      <div className={`timer-pill ${activeColor === 'red' ? 'is-active-red' : ''}`}>
+        <p className="text-xs uppercase tracking-widest text-white/75">Red</p>
+        <p className="font-display text-3xl leading-none">{msToClock(timeLeftMs.red)}</p>
       </div>
-      <div
-        className={`rounded-2xl p-3 ${activeColor === 'yellow' ? 'bg-p2/90 text-slate-900' : 'bg-white/20'}`}
-      >
-        <p className="text-xs uppercase tracking-wide">Yellow</p>
-        <p className="font-display text-2xl leading-none">{msToClock(timeLeftMs.yellow)}</p>
+      <div className={`timer-pill ${activeColor === 'yellow' ? 'is-active-yellow' : ''}`}>
+        <p className="text-xs uppercase tracking-widest text-white/75">Yellow</p>
+        <p className="font-display text-3xl leading-none">{msToClock(timeLeftMs.yellow)}</p>
       </div>
     </div>
   );
