@@ -337,16 +337,16 @@ select {
   flex: 1;
   min-height: 0;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
 }
 
 .c4-board-shell {
   position: relative;
-  width: min(100%, clamp(520px, 58vw, 900px), calc(max(100vh - 330px, 240px) * 1.14));
+  width: min(100%, clamp(540px, 62vw, 980px), calc(max(100vh - 285px, 280px) * 1.16));
   margin: 0 auto;
-  padding: clamp(10px, 1.05vw, 15px);
-  border-radius: 30px;
+  padding: clamp(8px, 0.92vw, 13px);
+  border-radius: 28px;
   background: linear-gradient(
     160deg,
     var(--orange-1) 0%,
@@ -362,16 +362,16 @@ select {
 .c4-board-shell::before {
   content: '';
   position: absolute;
-  inset: 8px;
-  border-radius: 24px;
+  inset: 7px;
+  border-radius: 22px;
   pointer-events: none;
   box-shadow: inset 0 0 0 2px rgba(255, 205, 124, 0.55);
 }
 
 .c4-top-rail {
   position: absolute;
-  inset: 8px 16px auto;
-  height: 14px;
+  inset: 7px 15px auto;
+  height: 13px;
   border-radius: 9999px;
   background: linear-gradient(180deg, rgba(255, 240, 199, 0.78), rgba(255, 185, 73, 0.42));
 }
@@ -379,7 +379,7 @@ select {
 .c4-win-glow {
   position: absolute;
   inset: 0;
-  border-radius: 30px;
+  border-radius: 28px;
   box-shadow: inset 0 0 62px rgba(35, 202, 122, 0.28);
   pointer-events: none;
 }
@@ -388,10 +388,10 @@ select {
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: clamp(4px, 0.48vw, 8px);
-  border-radius: 21px;
-  padding: clamp(8px, 0.95vw, 12px);
-  margin-top: 8px;
+  gap: clamp(4px, 0.42vw, 7px);
+  border-radius: 20px;
+  padding: clamp(7px, 0.82vw, 11px);
+  margin-top: 7px;
   background: linear-gradient(
     164deg,
     var(--board-blue-1) 0%,
@@ -557,7 +557,7 @@ select {
   }
 
   .c4-board-shell {
-    width: min(100%, clamp(430px, 70vw, 670px), calc(max(100vh - 360px, 220px) * 1.1));
+    width: min(100%, clamp(470px, 76vw, 760px), calc(max(100vh - 300px, 250px) * 1.14));
   }
 }
 
@@ -577,6 +577,6 @@ select {
 
   .c4-board-shell {
     width: 100%;
-    padding: 9px;
+    padding: 8px;
   }
 }
