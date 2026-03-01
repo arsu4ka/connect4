@@ -4,6 +4,6 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   preview: {
-    allowedHosts: ['.railway.app', 'localhost']
+    allowedHosts: ['.railway.app', 'localhost', 'connect4.bschold.meme']
   }
 });
