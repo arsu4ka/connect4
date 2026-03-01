@@ -6,3 +6,13 @@
 
   reverse_proxy client:4173
 }
+
+{$STUDIO_DOMAIN:db.connect4.bschold.meme} {
+  encode zstd gzip
+
+  @backend path /api* /health
+  reverse_proxy @backend server:3001
+
+  redir / /studio 302
+  reverse_proxy client:4173
+}

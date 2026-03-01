@@ -73,6 +73,25 @@ Notes:
 docker compose up --build
 ```
 
+### Embedded Prisma Studio
+
+This project includes an embedded Prisma Studio page at `/studio` with server-side token auth.
+
+- API endpoint: `POST /api/studio`
+- Client page: `/studio`
+- Auth header: `Authorization: Bearer <STUDIO_ADMIN_TOKEN>`
+
+Recommended production setup uses a separate subdomain:
+
+- app: `https://connect4.example.com`
+- studio: `https://db.connect4.example.com/studio`
+
+Required server env:
+
+- `STUDIO_ENABLED=true`
+- `STUDIO_ALLOWED_HOST=db.connect4.example.com`
+- `STUDIO_ADMIN_TOKEN=<strong-secret>`
+
 ## Key endpoints
 
 - `POST /api/rooms` - create online room

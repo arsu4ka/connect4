@@ -561,6 +561,55 @@ select {
   background: rgba(56, 88, 186, 0.58);
 }
 
+.studio-auth-shell {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+}
+
+.studio-auth-card {
+  width: min(100%, 460px);
+  display: grid;
+  gap: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 24px;
+  background: linear-gradient(160deg, var(--panel) 0%, rgba(66, 86, 156, 0.64) 100%);
+  box-shadow:
+    0 22px 44px rgba(24, 37, 84, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  padding: 1.1rem;
+}
+
+.studio-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.6rem;
+}
+
+.studio-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 14px;
+  background: rgba(10, 19, 48, 0.74);
+  padding: 0.5rem 0.65rem;
+}
+
+.studio-app-wrap {
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 @media (max-width: 1279px) {
   .panel-board,
   .panel-side {

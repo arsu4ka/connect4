@@ -9,8 +9,8 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    expose:
-      - '5432'
+    ports:
+      - '127.0.0.1:5432:5432'
 
   server:
     build:
@@ -22,6 +22,9 @@ services:
       PORT: 3001
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://connect4.bschold.meme}
       DISCONNECT_TIMEOUT_SECONDS: 60
+      STUDIO_ENABLED: ${STUDIO_ENABLED:-true}
+      # STUDIO_ALLOWED_HOST: ${STUDIO_DOMAIN:-db.connect4.bschold.meme}
+      STUDIO_ADMIN_TOKEN: ${STUDIO_ADMIN_TOKEN:-admin}
     depends_on:
       - postgres
     expose:
@@ -45,6 +48,7 @@ services:
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN:-connect4.bschold.meme}
+      STUDIO_DOMAIN: ${STUDIO_DOMAIN:-db.connect4.bschold.meme}
     depends_on:
       - client
       - server
