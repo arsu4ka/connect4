@@ -16,6 +16,7 @@ import { ToastStack, type ToastItem } from '../components/ToastStack';
 import { type Difficulty, pickAIMove } from '../game/ai';
 import { applyMove, emptyBoard, findWinLine, isDraw, oppositeColor } from '../game/logic';
 import { createRoom, joinInvite, previewInvite, saveOfflineGame } from '../lib/api';
+import { createMoveSoundPlayer } from '../lib/move-sound';
 import {
   getInviteUrl,
   getPlayerColor,
@@ -210,6 +211,8 @@ export function PlayPage() {
   const [onlineError, setOnlineError] = useState<string | null>(null);
 
   const socketRef = useRef<RoomSocket | null>(null);
+  const moveSoundRef = useRef(createMoveSoundPlayer());
+  const lastOfflineMoveCountRef = useRef(0);
 
   const timePresets = [60, 180, 300, 600] as const;
 
@@ -228,6 +231,19 @@ export function PlayPage() {
   useEffect(() => {
     return () => {
       toastTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, []);
+
+  useEffect(() => {
+    const soundPlayer = moveSoundRef.current;
+    const unlockAudio = () => soundPlayer.prime();
+    window.addEventListener('pointerdown', unlockAudio, { passive: true });
+    window.addEventListener('keydown', unlockAudio);
+
+    return () => {
+      window.removeEventListener('pointerdown', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+      soundPlayer.dispose();
     };
   }, []);
 
@@ -329,6 +345,13 @@ export function PlayPage() {
             });
           }
 
+          if (event.type === 'move_applied') {
+            const moveColor = event.state.lastMove?.color;
+            if (moveColor) {
+              moveSoundRef.current.play(moveColor === onlineSession.myColor ? 'self' : 'opponent');
+            }
+          }
+
           if (event.type === 'rematch_started') {
             setModal({
               title: 'Rematch started',
@@ -377,6 +400,24 @@ export function PlayPage() {
     offlineGame.currentTurnColor,
     offlineGame.status
   ]);
+
+  useEffect(() => {
+    if (mode !== 'offline') return;
+
+    const moveCount = offlineGame.moveCount;
+    if (moveCount <= lastOfflineMoveCountRef.current) {
+      lastOfflineMoveCountRef.current = moveCount;
+      return;
+    }
+
+    const lastMove = offlineGame.moves[offlineGame.moves.length - 1];
+    if (lastMove) {
+      const tone = lastMove.color === offlineGame.playerColor ? 'self' : 'opponent';
+      moveSoundRef.current.play(tone);
+    }
+
+    lastOfflineMoveCountRef.current = moveCount;
+  }, [mode, offlineGame.moveCount, offlineGame.moves, offlineGame.playerColor]);
 
   useEffect(() => {
     if (offlineGame.status !== 'finished' || !offlineGame.finishedAt) return;
