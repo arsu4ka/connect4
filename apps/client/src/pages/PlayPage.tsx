@@ -62,6 +62,7 @@ interface ModalState {
   title: string;
   description?: string;
   actionLabel?: string;
+  emoji?: string;
 }
 
 function choosePlayerColor(preferred: PreferredColor): DiscColor {
@@ -209,6 +210,8 @@ export function PlayPage() {
   const [onlineState, setOnlineState] = useState<GameState | null>(null);
   const [onlineConnected, setOnlineConnected] = useState(false);
   const [onlineError, setOnlineError] = useState<string | null>(null);
+  const [rematchOffer, setRematchOffer] = useState<{ byDisplayName: string } | null>(null);
+  const [rematchRequestedByMe, setRematchRequestedByMe] = useState(false);
 
   const socketRef = useRef<RoomSocket | null>(null);
   const moveSoundRef = useRef(createMoveSoundPlayer());
@@ -330,18 +333,23 @@ export function PlayPage() {
           }
 
           if (event.type === 'game_started') {
+            moveSoundRef.current.play('start');
             setModal({
               title: 'Match started',
-              description: 'Both players are ready. Good luck!'
+              description: 'Both players are ready. Good luck!',
+              emoji: '🚀'
             });
           }
 
           if (event.type === 'game_finished') {
             const yourWin =
               event.state.winnerColor && event.state.winnerColor === onlineSession.myColor;
+            setRematchOffer(null);
+            setRematchRequestedByMe(false);
             setModal({
               title: event.state.winnerColor ? (yourWin ? 'You won!' : 'You lost') : 'Draw',
-              description: `Result reason: ${formatFinishReason(event.reason)}`
+              description: `Result reason: ${formatFinishReason(event.reason)}`,
+              emoji: !event.state.winnerColor ? '🤝' : yourWin ? '🏆' : '😔'
             });
           }
 
@@ -353,15 +361,41 @@ export function PlayPage() {
           }
 
           if (event.type === 'rematch_started') {
+            setRematchOffer(null);
+            setRematchRequestedByMe(false);
+            moveSoundRef.current.play('start');
             setModal({
               title: 'Rematch started',
-              description: 'Colors swapped. New round is live.'
+              description: 'Colors swapped. New round is live.',
+              emoji: '🔁'
             });
+          }
+
+          if (event.type === 'rematch_requested') {
+            const isMine = event.byColor === onlineSession.myColor;
+            if (isMine) {
+              setRematchRequestedByMe(true);
+            } else {
+              setModal(null);
+              setRematchOffer({ byDisplayName: event.byDisplayName });
+            }
+          }
+
+          if (event.type === 'rematch_declined') {
+            setRematchOffer(null);
+            setRematchRequestedByMe(false);
+            if (event.byColor !== onlineSession.myColor) {
+              pushToast(`${event.byDisplayName} declined the rematch.`, 'error');
+            }
           }
 
           if ('state' in event) {
             setOnlineState(event.state);
             setOnlineError(null);
+            if (event.state.status !== 'finished') {
+              setRematchOffer(null);
+              setRematchRequestedByMe(false);
+            }
           }
         }
       },
@@ -447,7 +481,8 @@ export function PlayPage() {
 
     setModal({
       title: resultTitle,
-      description: 'You can start a new game or play a rematch with swapped colors.'
+      description: 'You can start a new game or play a rematch with swapped colors.',
+      emoji: !offlineGame.winnerColor ? '🤝' : offlineGame.winnerColor === offlineGame.playerColor ? '🏆' : '🤖'
     });
   }, [offlineDifficulty, offlineGame, offlinePreferredColor, offlineSavedForFinish]);
 
@@ -536,6 +571,8 @@ export function PlayPage() {
         isHost: true
       });
       setOnlineState(null);
+      setRematchOffer(null);
+      setRematchRequestedByMe(false);
       setOnlineTab('create');
       pushToast('Room created. Share your invite link.', 'success');
       navigate(`/online/game/${room.roomId}`);
@@ -571,6 +608,8 @@ export function PlayPage() {
         isHost: false
       });
       setOnlineState(null);
+      setRematchOffer(null);
+      setRematchRequestedByMe(false);
       pushToast('Joined room successfully.', 'success');
       navigate(`/online/game/${joined.roomId}`);
     } catch (error) {
@@ -613,8 +652,28 @@ export function PlayPage() {
     setOnlineState(null);
     setOnlineConnected(false);
     setOnlineError(null);
+    setRematchOffer(null);
+    setRematchRequestedByMe(false);
     setMode('online');
     navigate('/');
+  }
+
+  function handleRequestRematch() {
+    if (rematchRequestedByMe) return;
+    socketRef.current?.send({ type: 'request_rematch' });
+    setRematchRequestedByMe(true);
+    pushToast('Rematch request sent.', 'info');
+  }
+
+  function handleAcceptRematch() {
+    socketRef.current?.send({ type: 'request_rematch' });
+    setRematchRequestedByMe(true);
+    setRematchOffer(null);
+  }
+
+  function handleDeclineRematch() {
+    socketRef.current?.send({ type: 'decline_rematch' });
+    setRematchOffer(null);
   }
 
   async function copyInviteLink() {
@@ -633,7 +692,8 @@ export function PlayPage() {
       title: 'How to play?',
       description:
         'Players drop discs into columns. The disc falls to the lowest empty slot. First player to connect four discs in a row (horizontal, vertical, or diagonal) wins. If the board fills with no four-in-a-row, the game is a draw.',
-      actionLabel: "Let's play"
+      actionLabel: "Let's play",
+      emoji: '📘'
     });
   }
 
@@ -926,9 +986,10 @@ export function PlayPage() {
             <button
               type="button"
               className="primary-button"
-              onClick={() => socketRef.current?.send({ type: 'request_rematch' })}
+              onClick={handleRequestRematch}
+              disabled={rematchRequestedByMe}
             >
-              Request rematch
+              {rematchRequestedByMe ? 'Rematch requested...' : 'Request rematch'}
             </button>
             <button type="button" className="ghost-button" onClick={leaveOnlineMatch}>
               Leave room
@@ -1061,7 +1122,18 @@ export function PlayPage() {
         title={modal?.title ?? ''}
         description={modal?.description}
         actionLabel={modal?.actionLabel ?? 'Got it'}
+        emoji={modal?.emoji}
         onClose={() => setModal(null)}
+      />
+      <EventModal
+        open={Boolean(rematchOffer)}
+        title="Rematch request"
+        description={`${rematchOffer?.byDisplayName ?? 'Your opponent'} wants a rematch.`}
+        actionLabel="Accept"
+        secondaryActionLabel="Decline"
+        emoji="🤝"
+        onClose={handleAcceptRematch}
+        onSecondaryAction={handleDeclineRematch}
       />
       <ToastStack toasts={toasts} />
     </div>

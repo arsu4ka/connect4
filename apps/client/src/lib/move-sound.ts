@@ -1,4 +1,4 @@
-export type MoveSoundTone = 'self' | 'opponent';
+export type MoveSoundTone = 'self' | 'opponent' | 'start';
 
 export interface MoveSoundPlayer {
   prime(): void;
@@ -53,23 +53,32 @@ export function createMoveSoundPlayer(): MoveSoundPlayer {
       return;
     }
 
+    const playBeep = (frequency: number, startAt: number, duration: number, gainPeak: number) => {
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(frequency, startAt);
+
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(gainPeak, startAt + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+
+      oscillator.start(startAt);
+      oscillator.stop(startAt + duration + 0.01);
+    };
+
     const now = ctx.currentTime;
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const frequency = tone === 'self' ? 820 : 620;
+    if (tone === 'start') {
+      playBeep(700, now, 0.16, 0.18);
+      playBeep(940, now + 0.2, 0.2, 0.2);
+      return;
+    }
 
-    oscillator.type = 'triangle';
-    oscillator.frequency.setValueAtTime(frequency, now);
-
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.2, now + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-
-    oscillator.start(now);
-    oscillator.stop(now + 0.23);
+    playBeep(tone === 'self' ? 820 : 620, now, 0.22, 0.2);
   }
 
   function dispose() {

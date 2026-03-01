@@ -255,7 +255,7 @@ export class RoomManager {
     }
 
     if (event.type === 'decline_rematch') {
-      room.rematchVotes.clear();
+      this.declineRematch(room, player);
       return;
     }
   }
@@ -548,7 +548,9 @@ export class RoomManager {
     room.rematchVotes.add(player.id);
     this.broadcast(room, {
       type: 'rematch_requested',
-      byPlayerId: player.id
+      byPlayerId: player.id,
+      byDisplayName: player.displayName,
+      byColor: player.color
     });
 
     if (room.rematchVotes.size < 2) return;
@@ -568,6 +570,20 @@ export class RoomManager {
     this.broadcast(room, {
       type: 'rematch_started',
       state: this.toGameState(room)
+    });
+  }
+
+  private declineRematch(room: RoomSession, player: PlayerSlot): void {
+    const game = room.currentGame;
+    if (!game || game.status !== 'finished' || !room.guest) return;
+    if (room.rematchVotes.size === 0) return;
+
+    room.rematchVotes.clear();
+    this.broadcast(room, {
+      type: 'rematch_declined',
+      byPlayerId: player.id,
+      byDisplayName: player.displayName,
+      byColor: player.color
     });
   }
 

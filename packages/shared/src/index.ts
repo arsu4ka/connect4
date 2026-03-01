@@ -102,6 +102,7 @@ export type ServerEvent =
   | { type: 'player_disconnected'; playerId: string; disconnectDeadlineAt: number }
   | { type: 'player_reconnected'; playerId: string }
   | { type: 'game_finished'; state: GameState; reason: FinishReason }
-  | { type: 'rematch_requested'; byPlayerId: string }
+  | { type: 'rematch_requested'; byPlayerId: string; byDisplayName: string; byColor: DiscColor }
+  | { type: 'rematch_declined'; byPlayerId: string; byDisplayName: string; byColor: DiscColor }
   | { type: 'rematch_started'; state: GameState }
   | { type: 'error_event'; message: string };

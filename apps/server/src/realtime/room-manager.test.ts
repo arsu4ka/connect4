@@ -98,6 +98,37 @@ describe('room manager', () => {
     expect(colors).toContain('red');
   });
 
+  it('notifies players when rematch is declined', async () => {
+    const rm = manager();
+    const room = await rm.createRoom({ preferredColor: 'red', timeControl: { type: 'none' } });
+    const join = rm.joinByInvite(room.inviteToken);
+    expect(join).not.toBeNull();
+
+    const host = new FakeSocket();
+    const guest = new FakeSocket();
+    rm.connectPlayer(room.roomId, room.playerToken, host);
+    rm.connectPlayer(room.roomId, join!.playerToken, guest);
+
+    rm.handleEvent(room.roomId, room.playerToken, { type: 'make_move', column: 0 });
+    rm.handleEvent(room.roomId, join!.playerToken, { type: 'make_move', column: 1 });
+    rm.handleEvent(room.roomId, room.playerToken, { type: 'make_move', column: 0 });
+    rm.handleEvent(room.roomId, join!.playerToken, { type: 'make_move', column: 1 });
+    rm.handleEvent(room.roomId, room.playerToken, { type: 'make_move', column: 0 });
+    rm.handleEvent(room.roomId, join!.playerToken, { type: 'make_move', column: 1 });
+    rm.handleEvent(room.roomId, room.playerToken, { type: 'make_move', column: 0 });
+
+    rm.handleEvent(room.roomId, room.playerToken, { type: 'request_rematch' });
+    rm.handleEvent(room.roomId, join!.playerToken, { type: 'decline_rematch' });
+
+    const declined = [...host.sent, ...guest.sent]
+      .reverse()
+      .find((event) => (event as { type?: string }).type === 'rematch_declined') as
+      | { byDisplayName?: string }
+      | undefined;
+
+    expect(declined?.byDisplayName).toBe('Guest');
+  });
+
   it('finishes on chess-clock timeout', async () => {
     const rm = manager();
     const room = await rm.createRoom({
