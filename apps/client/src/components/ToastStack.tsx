@@ -8,7 +8,7 @@ export interface ToastItem {
 
 export function ToastStack({ toasts }: { toasts: ToastItem[] }) {
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-50 flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2">
+    <div className="pointer-events-none fixed bottom-[max(12px,env(safe-area-inset-bottom))] right-2 z-50 flex w-[min(360px,calc(100vw-1rem))] flex-col gap-2 sm:bottom-5 sm:right-5 sm:w-[min(360px,calc(100vw-2rem))]">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div

@@ -58,6 +58,12 @@ select {
   position: relative;
 }
 
+.app-shell {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+}
+
 .app-background::before {
   content: '';
   position: fixed;
@@ -316,6 +322,10 @@ select {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
+.timer-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .timer-pill {
   border: 1px solid rgba(255, 255, 255, 0.34);
   background: rgba(13, 24, 58, 0.52);
@@ -343,7 +353,7 @@ select {
 
 .c4-board-shell {
   position: relative;
-  width: min(100%, clamp(540px, 62vw, 980px), calc(max(100vh - 285px, 280px) * 1.16));
+  width: min(100%, clamp(540px, 58vw, 960px), calc(max(100dvh - 300px, 300px) * 1.16));
   margin: 0 auto;
   padding: clamp(8px, 0.92vw, 13px);
   border-radius: 28px;
@@ -402,6 +412,7 @@ select {
     inset 0 6px 20px rgba(255, 255, 255, 0.24),
     inset 0 -10px 22px rgba(12, 42, 132, 0.44),
     0 14px 20px rgba(15, 43, 128, 0.28);
+  touch-action: manipulation;
 }
 
 .c4-cell {
@@ -550,18 +561,72 @@ select {
   background: rgba(56, 88, 186, 0.58);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1279px) {
+  .panel-board,
+  .panel-side {
+    padding: 0.85rem;
+  }
+
+  .c4-board-shell {
+    width: min(100%, clamp(500px, 70vw, 840px), calc(max(100dvh - 320px, 270px) * 1.14));
+  }
+}
+
+@media (max-width: 1023px) {
   .panel-board,
   .panel-side {
     padding: 0.8rem;
   }
 
+  .board-stage {
+    flex: none;
+  }
+
   .c4-board-shell {
-    width: min(100%, clamp(470px, 76vw, 760px), calc(max(100vh - 300px, 250px) * 1.14));
+    width: min(100%, clamp(420px, 85vw, 760px), calc(max(100dvh - 360px, 220px) * 1.12));
+  }
+
+  .site-footer-copy {
+    font-size: 0.86rem;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
+  .panel-side {
+    margin-top: 0.1rem;
+  }
+
+  .mode-switch > button {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .timer-pill {
+    padding: 0.62rem;
+  }
+
+  .timer-panel {
+    gap: 0.55rem;
+  }
+
+  .c4-grid {
+    gap: clamp(3px, 0.95vw, 5px);
+    padding: clamp(6px, 1.25vw, 8px);
+  }
+
+  .c4-cell {
+    min-height: 34px;
+  }
+
+  .site-footer {
+    padding: 0.66rem 0.72rem;
+  }
+
+  .panel-board,
+  .panel-side {
+    border-radius: 20px;
+  }
+
   .site-footer-left {
     width: 100%;
     justify-content: space-between;
@@ -577,6 +642,15 @@ select {
 
   .c4-board-shell {
     width: 100%;
-    padding: 8px;
+    padding: 7px;
+    border-radius: 22px;
+  }
+
+  .c4-board-shell::before {
+    border-radius: 18px;
+  }
+
+  .c4-win-glow {
+    border-radius: 22px;
   }
 }

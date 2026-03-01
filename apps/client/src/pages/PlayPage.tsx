@@ -596,23 +596,38 @@ export function PlayPage() {
     });
   }
 
-  function renderOfflinePanel() {
-    const resultText =
-      offlineGame.status !== 'finished'
-        ? 'No result yet.'
-        : !offlineGame.winnerColor
-          ? 'Draw'
-          : offlineGame.winnerColor === offlineGame.playerColor
-            ? 'You won'
-            : 'Computer won';
+  const offlineResultText =
+    offlineGame.status !== 'finished'
+      ? 'No result yet.'
+      : !offlineGame.winnerColor
+        ? 'Draw'
+        : offlineGame.winnerColor === offlineGame.playerColor
+          ? 'You won'
+          : 'Computer won';
+
+  function renderOfflineInfoPanel(showIdleHint = false) {
+    if (offlineGame.status === 'idle') {
+      return showIdleHint ? (
+        <div className="panel-block text-sm text-slate-200">
+          <p>Choose settings in Controls and start a match.</p>
+        </div>
+      ) : null;
+    }
 
     return (
-      <div className="space-y-5">
-        <div>
-          <p className="panel-eyebrow">Offline mode</p>
-          <h2 className="font-display text-3xl text-white">Play vs Computer</h2>
-        </div>
+      <div className="panel-block text-sm text-slate-200">
+        <p>Current turn: {offlineGame.currentTurnColor.toUpperCase()}</p>
+        <p>Your color: {offlineGame.playerColor.toUpperCase()}</p>
+        <p>Result: {offlineResultText}</p>
+        {offlineBotThinking ? <p>Computer is thinking...</p> : null}
+        {offlineSaveError ? <p className="text-rose-300">{offlineSaveError}</p> : null}
+      </div>
+    );
+  }
 
+  function renderOfflineControlsPanel() {
+    return (
+      <div className="space-y-3">
         {offlineGame.status === 'idle' ? (
           <>
             <label className="field-group">
@@ -639,26 +654,20 @@ export function PlayPage() {
               </select>
             </label>
 
-            <button type="button" className="primary-button" onClick={() => startOfflineGame()}>
+            <button
+              type="button"
+              className="primary-button w-full sm:w-auto"
+              onClick={() => startOfflineGame()}
+            >
               Start Offline Game
             </button>
           </>
         ) : null}
 
-        {offlineGame.status !== 'idle' ? (
-          <div className="panel-block text-sm text-slate-200">
-            <p>Current turn: {offlineGame.currentTurnColor.toUpperCase()}</p>
-            <p>Your color: {offlineGame.playerColor.toUpperCase()}</p>
-            <p>Result: {resultText}</p>
-            {offlineBotThinking ? <p>Computer is thinking...</p> : null}
-            {offlineSaveError ? <p className="text-rose-300">{offlineSaveError}</p> : null}
-          </div>
-        ) : null}
-
         {offlineGame.status === 'active' ? (
           <button
             type="button"
-            className="ghost-button"
+            className="ghost-button w-full sm:w-auto"
             onClick={() => setOfflineGame(createOfflineIdleState())}
           >
             Back to setup
@@ -683,13 +692,29 @@ export function PlayPage() {
     );
   }
 
-  function renderOnlineSetup() {
+  function renderOfflinePanel() {
     return (
       <div className="space-y-5">
         <div>
-          <p className="panel-eyebrow">Online mode</p>
-          <h2 className="font-display text-3xl text-white">Create or Join Match</h2>
+          <p className="panel-eyebrow">Offline mode</p>
+          <h2 className="font-display text-3xl text-white">Play vs Computer</h2>
         </div>
+
+        {renderOfflineInfoPanel(false)}
+        {renderOfflineControlsPanel()}
+      </div>
+    );
+  }
+
+  function renderOnlineSetup({ showHeading = true }: { showHeading?: boolean } = {}) {
+    return (
+      <div className="space-y-5">
+        {showHeading ? (
+          <div>
+            <p className="panel-eyebrow">Online mode</p>
+            <h2 className="font-display text-3xl text-white">Create or Join Match</h2>
+          </div>
+        ) : null}
 
         <div className="mode-switch">
           <button
@@ -755,7 +780,11 @@ export function PlayPage() {
               ) : null}
             </div>
 
-            <button type="submit" className="primary-button" disabled={onlineCreating}>
+            <button
+              type="submit"
+              className="primary-button w-full sm:w-auto"
+              disabled={onlineCreating}
+            >
               {onlineCreating ? 'Creating room...' : 'Create online room'}
             </button>
           </form>
@@ -791,7 +820,7 @@ export function PlayPage() {
               </div>
             ) : null}
 
-            <button type="submit" className="primary-button" disabled={joining}>
+            <button type="submit" className="primary-button w-full sm:w-auto" disabled={joining}>
               {joining ? 'Joining...' : 'Join online room'}
             </button>
           </form>
@@ -802,19 +831,11 @@ export function PlayPage() {
     );
   }
 
-  function renderOnlineLivePanel() {
+  function renderOnlineLiveInfoPanel() {
     const currentTurn = onlineState?.currentTurnColor ?? onlineSession?.myColor ?? 'red';
-    const inviteLinkPreview = onlineSession?.inviteUrl
-      ? compactInviteUrl(onlineSession.inviteUrl)
-      : null;
 
     return (
-      <div className="space-y-5">
-        <div>
-          <p className="panel-eyebrow">Online mode</p>
-          <h2 className="font-display text-3xl text-white">Live Match</h2>
-        </div>
-
+      <div className="space-y-4">
         <div className="panel-block text-sm text-slate-200">
           <p>Connection: {onlineConnected ? 'Online' : 'Offline'}</p>
           <p>Status: {onlineStatusText}</p>
@@ -824,6 +845,18 @@ export function PlayPage() {
 
         <TimerPanel activeColor={currentTurn} timeLeftMs={onlineState?.timeLeftMs} />
 
+        {onlineError ? <p className="text-sm text-rose-300">{onlineError}</p> : null}
+      </div>
+    );
+  }
+
+  function renderOnlineLiveControlsPanel() {
+    const inviteLinkPreview = onlineSession?.inviteUrl
+      ? compactInviteUrl(onlineSession.inviteUrl)
+      : null;
+
+    return (
+      <div className="space-y-3">
         {onlineSession?.inviteUrl ? (
           <button type="button" className="invite-button" onClick={copyInviteLink}>
             <span className="invite-main">
@@ -861,26 +894,42 @@ export function PlayPage() {
             </button>
           </div>
         ) : (
-          <button type="button" className="ghost-button" onClick={leaveOnlineMatch}>
+          <button
+            type="button"
+            className="ghost-button w-full sm:w-auto"
+            onClick={leaveOnlineMatch}
+          >
             Leave room
           </button>
         )}
+      </div>
+    );
+  }
 
-        {onlineError ? <p className="text-sm text-rose-300">{onlineError}</p> : null}
+  function renderOnlineLivePanel() {
+    return (
+      <div className="space-y-5">
+        <div>
+          <p className="panel-eyebrow">Online mode</p>
+          <h2 className="font-display text-3xl text-white">Live Match</h2>
+        </div>
+
+        {renderOnlineLiveInfoPanel()}
+        {renderOnlineLiveControlsPanel()}
       </div>
     );
   }
 
   return (
-    <div className="app-background h-screen overflow-hidden px-3 py-3 text-white sm:px-5 lg:px-6">
-      <div className="mx-auto flex h-full w-full max-w-[1400px] flex-col">
+    <div className="app-background app-shell px-3 py-3 text-white sm:px-5 lg:px-6">
+      <div className="mx-auto flex min-h-full w-full max-w-[1400px] flex-col">
         <BrandBar />
 
-        <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(0,7fr)_minmax(320px,3fr)]">
+        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(300px,3fr)] 2xl:grid-cols-[minmax(0,7fr)_minmax(330px,3fr)]">
           <motion.section
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="panel-board min-h-0 h-full flex flex-col"
+            className="panel-board flex flex-col lg:min-h-0 lg:h-full"
           >
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>

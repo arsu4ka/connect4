@@ -22,14 +22,18 @@ export function TimerPanel({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 text-white">
+    <div className="timer-panel grid grid-cols-2 gap-3 text-white">
       <div className={`timer-pill ${activeColor === 'red' ? 'is-active-red' : ''}`}>
         <p className="text-xs uppercase tracking-widest text-white/75">Red</p>
-        <p className="font-display text-3xl leading-none">{msToClock(timeLeftMs.red)}</p>
+        <p className="font-display text-[1.65rem] leading-none sm:text-3xl">
+          {msToClock(timeLeftMs.red)}
+        </p>
       </div>
       <div className={`timer-pill ${activeColor === 'yellow' ? 'is-active-yellow' : ''}`}>
         <p className="text-xs uppercase tracking-widest text-white/75">Yellow</p>
-        <p className="font-display text-3xl leading-none">{msToClock(timeLeftMs.yellow)}</p>
+        <p className="font-display text-[1.65rem] leading-none sm:text-3xl">
+          {msToClock(timeLeftMs.yellow)}
+        </p>
       </div>
     </div>
   );
