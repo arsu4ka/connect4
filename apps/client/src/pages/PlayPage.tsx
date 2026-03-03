@@ -32,6 +32,13 @@ import { RoomSocket } from '../lib/ws-client';
 type MatchMode = 'offline' | 'online';
 type OnlineSetupTab = 'create' | 'join';
 type OfflineStatus = 'idle' | 'active' | 'finished';
+type BoardStatusTone =
+  | 'connecting'
+  | 'waiting'
+  | 'your-turn'
+  | 'opponent-turn'
+  | 'paused'
+  | 'finished';
 
 interface OfflineGame {
   board: Array<Array<DiscColor | null>>;
@@ -66,6 +73,24 @@ interface ModalState {
   description?: string;
   actionLabel?: string;
   emoji?: string;
+}
+
+interface RouteInviteModalState {
+  token: string;
+  valid: boolean;
+  hostName?: string;
+  status?: GameState['status'];
+  message: string;
+}
+
+interface BoardViewState {
+  board: Array<Array<DiscColor | null>>;
+  winLine: { from: [number, number]; to: [number, number] } | null;
+  disabled: boolean;
+  previewColor: DiscColor | null;
+  statusTone: BoardStatusTone;
+  statusEmoji: string;
+  subtitle: string;
 }
 
 function choosePlayerColor(preferred: PreferredColor): DiscColor {
@@ -208,6 +233,7 @@ export function PlayPage() {
     hostName?: string;
     message?: string;
   } | null>(null);
+  const [routeInviteModal, setRouteInviteModal] = useState<RouteInviteModalState | null>(null);
 
   const [onlineSession, setOnlineSession] = useState<OnlineSession | null>(null);
   const [onlineMyColor, setOnlineMyColor] = useState<DiscColor | null>(null);
@@ -268,6 +294,50 @@ export function PlayPage() {
   }, [routeInviteToken]);
 
   useEffect(() => {
+    if (!routeInviteToken || onlineSession) return;
+
+    let cancelled = false;
+    const token = routeInviteToken.trim();
+    if (!token) return;
+
+    previewInvite(token)
+      .then((preview) => {
+        if (cancelled) return;
+
+        if (preview.valid) {
+          setRouteInviteModal({
+            token,
+            valid: true,
+            hostName: preview.hostName,
+            status: preview.status,
+            message: `Room is available. Host: ${preview.hostName ?? 'Host'}`
+          });
+          return;
+        }
+
+        setRouteInviteModal({
+          token,
+          valid: false,
+          hostName: preview.hostName,
+          status: preview.status,
+          message: 'This invite is invalid or already used.'
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setRouteInviteModal({
+          token,
+          valid: false,
+          message: 'Failed to check invite right now. Please try again.'
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onlineSession, routeInviteToken]);
+
+  useEffect(() => {
     if (!routeRoomId || onlineSession) return;
     const token = getPlayerToken(routeRoomId);
     const color = getPlayerColor(routeRoomId);
@@ -290,6 +360,12 @@ export function PlayPage() {
     if (mode !== 'online' || onlineTab !== 'join' || onlineSession) return;
 
     const token = joinToken.trim();
+    const fromInviteRoute = routeInviteToken.trim();
+    if (fromInviteRoute && token === fromInviteRoute) {
+      setInvitePreviewState(null);
+      return;
+    }
+
     if (!token) {
       setInvitePreviewState(null);
       return;
@@ -316,7 +392,7 @@ export function PlayPage() {
     }, 260);
 
     return () => window.clearTimeout(timer);
-  }, [joinToken, mode, onlineSession, onlineTab]);
+  }, [joinToken, mode, onlineSession, onlineTab, routeInviteToken]);
 
   useEffect(() => {
     if (!onlineSession) return;
@@ -532,7 +608,7 @@ export function PlayPage() {
 
   const resolvedOnlineColor = onlineMyColor ?? onlineSession?.myColor ?? null;
 
-  const boardState = useMemo(() => {
+  const boardState = useMemo<BoardViewState>(() => {
     if (mode === 'online') {
       const onlineDisabled =
         !onlineState ||
@@ -546,14 +622,38 @@ export function PlayPage() {
         winLine: onlineState?.winLine ?? null,
         disabled: onlineDisabled,
         previewColor: !onlineDisabled && resolvedOnlineColor ? resolvedOnlineColor : null,
+        statusTone: !onlineState
+          ? 'connecting'
+          : onlineState.status === 'waiting'
+            ? 'waiting'
+            : onlineState.status === 'active'
+              ? onlineState.paused
+                ? 'paused'
+                : onlineState.currentTurnColor === resolvedOnlineColor
+                  ? 'your-turn'
+                  : 'opponent-turn'
+              : 'finished',
+        statusEmoji: !onlineState
+          ? '🛰️'
+          : onlineState.status === 'waiting'
+            ? '⏳'
+            : onlineState.status === 'active'
+              ? onlineState.paused
+                ? '🛑'
+                : onlineState.currentTurnColor === resolvedOnlineColor
+                  ? '🔥'
+                  : '👀'
+              : '🏁',
         subtitle: !onlineState
           ? 'Connecting to room...'
           : onlineState.status === 'waiting'
             ? 'Waiting for the second player'
             : onlineState.status === 'active'
-              ? onlineState.currentTurnColor === resolvedOnlineColor
-                ? 'Your turn'
-                : 'Opponent turn'
+              ? onlineState.paused
+                ? 'Paused (reconnection)'
+                : onlineState.currentTurnColor === resolvedOnlineColor
+                  ? 'Your turn'
+                  : 'Opponent turn'
               : 'Match finished'
       };
     }
@@ -567,6 +667,22 @@ export function PlayPage() {
         offlineGame.status === 'active' && offlineGame.currentTurnColor === offlineGame.playerColor
           ? offlineGame.playerColor
           : null,
+      statusTone:
+        offlineGame.status === 'idle'
+          ? 'waiting'
+          : offlineGame.status === 'active'
+            ? offlineGame.currentTurnColor === offlineGame.playerColor
+              ? 'your-turn'
+              : 'opponent-turn'
+            : 'finished',
+      statusEmoji:
+        offlineGame.status === 'idle'
+          ? '⏳'
+          : offlineGame.status === 'active'
+            ? offlineGame.currentTurnColor === offlineGame.playerColor
+              ? '🔥'
+              : '🤖'
+            : '🏁',
       subtitle:
         offlineGame.status === 'idle'
           ? 'Set up your match on the right panel'
@@ -634,10 +750,11 @@ export function PlayPage() {
     }
   }
 
-  async function handleJoinOnline(e: React.FormEvent) {
-    e.preventDefault();
-    const token = joinToken.trim();
-    if (!token) {
+  async function joinOnlineRoom(token: string) {
+    if (joining) return;
+
+    const trimmedToken = token.trim();
+    if (!trimmedToken) {
       setOnlineError('Invite token is required.');
       return;
     }
@@ -646,7 +763,7 @@ export function PlayPage() {
     setOnlineError(null);
 
     try {
-      const joined = await joinInvite(token, joinDisplayName.trim() || undefined);
+      const joined = await joinInvite(trimmedToken, joinDisplayName.trim() || undefined);
       savePlayerToken(joined.roomId, joined.playerToken);
       savePlayerId(joined.roomId, joined.playerId);
       savePlayerColor(joined.roomId, joined.yourColor);
@@ -659,6 +776,7 @@ export function PlayPage() {
         myColor: joined.yourColor,
         isHost: false
       });
+      setRouteInviteModal(null);
       setOnlineState(null);
       setRematchOffer(null);
       setRematchRequestedByMe(false);
@@ -671,6 +789,11 @@ export function PlayPage() {
     } finally {
       setJoining(false);
     }
+  }
+
+  async function handleJoinOnline(e: React.FormEvent) {
+    e.preventDefault();
+    await joinOnlineRoom(joinToken);
   }
 
   function handleOfflineDrop(column: number) {
@@ -847,6 +970,13 @@ export function PlayPage() {
   }
 
   function renderOfflinePanel() {
+    const offlineTimerStatus =
+      offlineGame.status === 'idle'
+        ? 'waiting'
+        : offlineGame.status === 'active'
+          ? 'active'
+          : 'finished';
+
     return (
       <div className="space-y-5">
         <div>
@@ -855,6 +985,11 @@ export function PlayPage() {
         </div>
 
         {renderOfflineInfoPanel(false)}
+        <TimerPanel
+          activeColor={offlineGame.currentTurnColor}
+          status={offlineTimerStatus}
+          timeControl={{ type: 'none' }}
+        />
         {renderOfflineControlsPanel()}
       </div>
     );
@@ -987,17 +1122,43 @@ export function PlayPage() {
 
   function renderOnlineLiveInfoPanel() {
     const currentTurn = onlineState?.currentTurnColor ?? resolvedOnlineColor ?? 'red';
+    const onlineColor = resolvedOnlineColor ?? 'red';
+    const onlineTimerStatus =
+      !onlineState || onlineState.status === 'waiting' || onlineState.paused
+        ? 'waiting'
+        : onlineState.status === 'active'
+          ? 'active'
+          : 'finished';
 
     return (
       <div className="space-y-4">
-        <div className="panel-block text-sm text-slate-200">
-          <p>Connection: {onlineConnected ? 'Online' : 'Offline'}</p>
-          <p>Status: {onlineStatusText}</p>
-          <p>Your color: {(resolvedOnlineColor ?? 'red').toUpperCase()}</p>
-          {onlineState?.paused ? <p>Game paused: waiting for reconnection.</p> : null}
+        <div className="panel-block panel-game-info text-sm text-slate-100">
+          <p>
+            <span>⚡️ Connection:</span>{' '}
+            <strong>{onlineConnected ? 'Online' : 'Offline'}</strong>
+          </p>
+          <p>
+            <span>📡 Status:</span> <strong>{onlineStatusText}</strong>
+          </p>
+          <p>
+            <span>🎨 Your color:</span>{' '}
+            <strong className={onlineColor === 'red' ? 'text-rose-300' : 'text-yellow-300'}>
+              {onlineColor.toUpperCase()}
+            </strong>
+          </p>
+          {onlineState?.paused ? (
+            <p>
+              <span>⏸️ Notice:</span> <strong>Game paused: waiting for reconnection.</strong>
+            </p>
+          ) : null}
         </div>
 
-        <TimerPanel activeColor={currentTurn} timeLeftMs={onlineState?.timeLeftMs} />
+        <TimerPanel
+          activeColor={currentTurn}
+          status={onlineTimerStatus}
+          timeControl={onlineState?.timeControl}
+          timeLeftMs={onlineState?.timeLeftMs}
+        />
 
         {onlineError ? <p className="text-sm text-rose-300">{onlineError}</p> : null}
       </div>
@@ -1093,8 +1254,9 @@ export function PlayPage() {
                   {mode === 'online' ? 'Online Arena' : 'Offline Arena'}
                 </p>
               </div>
-              <p className="rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-sm text-slate-200">
-                {boardState.subtitle}
+              <p className={`status-badge status-${boardState.statusTone}`}>
+                <span aria-hidden>{boardState.statusEmoji}</span>
+                <span>{boardState.subtitle}</span>
               </p>
             </div>
 
@@ -1177,6 +1339,31 @@ export function PlayPage() {
         actionLabel={modal?.actionLabel ?? 'Got it'}
         emoji={modal?.emoji}
         onClose={() => setModal(null)}
+      />
+      <EventModal
+        open={Boolean(routeInviteModal)}
+        title={routeInviteModal?.valid ? 'Room found' : 'Room unavailable'}
+        description={routeInviteModal?.message}
+        actionLabel={
+          routeInviteModal?.valid
+            ? joining
+              ? 'Joining...'
+              : 'Join and start game'
+            : 'Got it'
+        }
+        secondaryActionLabel={routeInviteModal?.valid ? 'Cancel' : undefined}
+        onSecondaryAction={routeInviteModal?.valid ? () => setRouteInviteModal(null) : undefined}
+        emoji={routeInviteModal?.valid ? '🎮' : '⚠️'}
+        onClose={() => {
+          if (!routeInviteModal?.valid) {
+            setRouteInviteModal(null);
+            return;
+          }
+
+          const inviteToken = routeInviteModal.token;
+          setRouteInviteModal(null);
+          void joinOnlineRoom(inviteToken);
+        }}
       />
       <EventModal
         open={Boolean(rematchOffer)}

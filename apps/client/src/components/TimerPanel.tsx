@@ -1,4 +1,4 @@
-import type { DiscColor } from '@connect4/shared';
+import type { DiscColor, TimeControl } from '@connect4/shared';
 
 function msToClock(ms?: number): string {
   if (ms === undefined) return '--:--';
@@ -12,27 +12,35 @@ function msToClock(ms?: number): string {
 
 export function TimerPanel({
   activeColor,
+  status,
+  timeControl,
   timeLeftMs
 }: {
   activeColor: DiscColor;
+  status: 'waiting' | 'active' | 'finished';
+  timeControl?: TimeControl;
   timeLeftMs?: Record<DiscColor, number>;
 }) {
-  if (!timeLeftMs) {
-    return <p className="text-sm text-slate-200/80">No time control</p>;
-  }
+  const showInfinity = timeControl?.type === 'none';
+  const redValue = showInfinity ? '∞' : msToClock(timeLeftMs?.red);
+  const yellowValue = showInfinity ? '∞' : msToClock(timeLeftMs?.yellow);
+  const redIsActive = status === 'active' && activeColor === 'red';
+  const yellowIsActive = status === 'active' && activeColor === 'yellow';
+  const redClass = `timer-pill ${redIsActive ? 'is-active-red' : ''} ${!redIsActive ? 'is-dim' : ''}`;
+  const yellowClass = `timer-pill ${yellowIsActive ? 'is-active-yellow' : ''} ${!yellowIsActive ? 'is-dim' : ''}`;
 
   return (
     <div className="timer-panel grid grid-cols-2 gap-3 text-white">
-      <div className={`timer-pill ${activeColor === 'red' ? 'is-active-red' : ''}`}>
+      <div className={redClass.trim()}>
         <p className="text-xs uppercase tracking-widest text-white/75">Red</p>
         <p className="font-display text-[1.65rem] leading-none sm:text-3xl">
-          {msToClock(timeLeftMs.red)}
+          {redValue}
         </p>
       </div>
-      <div className={`timer-pill ${activeColor === 'yellow' ? 'is-active-yellow' : ''}`}>
+      <div className={yellowClass.trim()}>
         <p className="text-xs uppercase tracking-widest text-white/75">Yellow</p>
         <p className="font-display text-[1.65rem] leading-none sm:text-3xl">
-          {msToClock(timeLeftMs.yellow)}
+          {yellowValue}
         </p>
       </div>
     </div>
