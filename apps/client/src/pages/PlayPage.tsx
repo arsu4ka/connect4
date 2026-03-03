@@ -248,6 +248,7 @@ export function PlayPage() {
   const onlineMyColorRef = useRef<DiscColor | null>(null);
   const moveSoundRef = useRef(createMoveSoundPlayer());
   const lastOfflineMoveCountRef = useRef(0);
+  const leavingOnlineRoomRef = useRef(false);
 
   const timePresets = [60, 180, 300, 600] as const;
 
@@ -338,7 +339,7 @@ export function PlayPage() {
   }, [onlineSession, routeInviteToken]);
 
   useEffect(() => {
-    if (!routeRoomId || onlineSession) return;
+    if (!routeRoomId || onlineSession || leavingOnlineRoomRef.current) return;
     const token = getPlayerToken(routeRoomId);
     const color = getPlayerColor(routeRoomId);
     if (!token || !color) return;
@@ -355,6 +356,12 @@ export function PlayPage() {
       isHost: Boolean(getInviteUrl(routeRoomId))
     });
   }, [onlineSession, routeRoomId]);
+
+  useEffect(() => {
+    if (!routeRoomId) {
+      leavingOnlineRoomRef.current = false;
+    }
+  }, [routeRoomId]);
 
   useEffect(() => {
     if (mode !== 'online' || onlineTab !== 'join' || onlineSession) return;
@@ -821,6 +828,7 @@ export function PlayPage() {
   }
 
   function leaveOnlineMatch() {
+    leavingOnlineRoomRef.current = true;
     socketRef.current?.close();
     socketRef.current = null;
     setOnlineSession(null);
@@ -830,7 +838,9 @@ export function PlayPage() {
     setOnlineError(null);
     setRematchOffer(null);
     setRematchRequestedByMe(false);
+    setRouteInviteModal(null);
     setMode('online');
+    pushToast('You left the room.', 'info');
     navigate('/');
   }
 
