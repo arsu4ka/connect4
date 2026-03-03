@@ -138,6 +138,7 @@ export class RoomManager {
       roomId,
       inviteToken,
       inviteUrl: `${this.publicBaseUrl}/online/join/${inviteToken}`,
+      playerId: host.id,
       playerToken: hostToken,
       yourColor: hostColor
     };
@@ -183,6 +184,7 @@ export class RoomManager {
 
     return {
       roomId: room.id,
+      playerId: guest.id,
       playerToken: guestToken,
       yourColor: guestColor
     };
@@ -460,7 +462,10 @@ export class RoomManager {
     const game = room.currentGame;
     if (!game || game.status !== 'active') return;
     if (game.paused) return;
-    if (player.color !== game.currentTurnColor) return;
+    if (player.color !== game.currentTurnColor) {
+      this.sendError(player, 'not_your_turn');
+      return;
+    }
 
     const moved = applyMove(game.board, column, player.color);
     if (!moved) {

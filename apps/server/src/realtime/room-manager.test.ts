@@ -31,7 +31,9 @@ describe('room manager', () => {
     const room = await rm.createRoom({ preferredColor: 'red', timeControl: { type: 'none' } });
     const join = rm.joinByInvite(room.inviteToken);
 
+    expect(room.playerId).toBeTruthy();
     expect(join).not.toBeNull();
+    expect(join?.playerId).toBeTruthy();
 
     const secondJoin = rm.joinByInvite(room.inviteToken);
     expect(secondJoin).toBeNull();
@@ -151,5 +153,26 @@ describe('room manager', () => {
       | { reason?: string }
       | undefined;
     expect(finished?.reason).toBe('timeout');
+  });
+
+  it('returns explicit error when player moves out of turn', async () => {
+    const rm = manager();
+    const room = await rm.createRoom({ preferredColor: 'red', timeControl: { type: 'none' } });
+    const join = rm.joinByInvite(room.inviteToken);
+    expect(join).not.toBeNull();
+
+    const host = new FakeSocket();
+    const guest = new FakeSocket();
+    rm.connectPlayer(room.roomId, room.playerToken, host);
+    rm.connectPlayer(room.roomId, join!.playerToken, guest);
+
+    rm.handleEvent(room.roomId, join!.playerToken, { type: 'make_move', column: 0 });
+
+    const errorEvent = guest.sent
+      .reverse()
+      .find((event) => (event as { type?: string }).type === 'error_event') as
+      | { message?: string }
+      | undefined;
+    expect(errorEvent?.message).toBe('not_your_turn');
   });
 });

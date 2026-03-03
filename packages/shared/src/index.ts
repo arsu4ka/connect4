@@ -49,6 +49,7 @@ export interface CreateRoomResponse {
   roomId: string;
   inviteToken: string;
   inviteUrl: string;
+  playerId: string;
   playerToken: string;
   yourColor: DiscColor;
 }
@@ -66,6 +67,7 @@ export interface JoinInviteRequest {
 
 export interface JoinInviteResponse {
   roomId: string;
+  playerId: string;
   playerToken: string;
   yourColor: DiscColor;
 }

@@ -1,6 +1,7 @@
 import type { DiscColor } from '@connect4/shared';
 
 const TOKENS_KEY = 'c4_player_tokens';
+const PLAYER_IDS_KEY = 'c4_player_ids';
 const COLORS_KEY = 'c4_player_colors';
 const INVITES_KEY = 'c4_invites';
 
@@ -26,6 +27,17 @@ export function savePlayerToken(roomId: string, token: string): void {
 
 export function getPlayerToken(roomId: string): string | null {
   const map = readMap(TOKENS_KEY);
+  return map[roomId] ?? null;
+}
+
+export function savePlayerId(roomId: string, playerId: string): void {
+  const map = readMap(PLAYER_IDS_KEY);
+  map[roomId] = playerId;
+  writeMap(PLAYER_IDS_KEY, map);
+}
+
+export function getPlayerId(roomId: string): string | null {
+  const map = readMap(PLAYER_IDS_KEY);
   return map[roomId] ?? null;
 }
 

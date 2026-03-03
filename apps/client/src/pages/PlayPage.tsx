@@ -19,9 +19,11 @@ import { createRoom, joinInvite, previewInvite, saveOfflineGame } from '../lib/a
 import { createMoveSoundPlayer } from '../lib/move-sound';
 import {
   getInviteUrl,
+  getPlayerId,
   getPlayerColor,
   getPlayerToken,
   saveInviteUrl,
+  savePlayerId,
   savePlayerColor,
   savePlayerToken
 } from '../lib/storage';
@@ -52,6 +54,7 @@ interface OfflineGame {
 
 interface OnlineSession {
   roomId: string;
+  playerId: string;
   playerToken: string;
   myColor: DiscColor;
   inviteUrl?: string;
@@ -207,13 +210,16 @@ export function PlayPage() {
   } | null>(null);
 
   const [onlineSession, setOnlineSession] = useState<OnlineSession | null>(null);
+  const [onlineMyColor, setOnlineMyColor] = useState<DiscColor | null>(null);
   const [onlineState, setOnlineState] = useState<GameState | null>(null);
   const [onlineConnected, setOnlineConnected] = useState(false);
   const [onlineError, setOnlineError] = useState<string | null>(null);
   const [rematchOffer, setRematchOffer] = useState<{ byDisplayName: string } | null>(null);
   const [rematchRequestedByMe, setRematchRequestedByMe] = useState(false);
+  const lastNotYourTurnToastAtRef = useRef(0);
 
   const socketRef = useRef<RoomSocket | null>(null);
+  const onlineMyColorRef = useRef<DiscColor | null>(null);
   const moveSoundRef = useRef(createMoveSoundPlayer());
   const lastOfflineMoveCountRef = useRef(0);
 
@@ -236,6 +242,10 @@ export function PlayPage() {
       toastTimersRef.current.forEach((timer) => window.clearTimeout(timer));
     };
   }, []);
+
+  useEffect(() => {
+    onlineMyColorRef.current = onlineMyColor;
+  }, [onlineMyColor]);
 
   useEffect(() => {
     const soundPlayer = moveSoundRef.current;
@@ -262,10 +272,13 @@ export function PlayPage() {
     const token = getPlayerToken(routeRoomId);
     const color = getPlayerColor(routeRoomId);
     if (!token || !color) return;
+    const playerId = getPlayerId(routeRoomId) ?? '';
 
     setMode('online');
+    setOnlineMyColor(color);
     setOnlineSession({
       roomId: routeRoomId,
+      playerId,
       playerToken: token,
       myColor: color,
       inviteUrl: getInviteUrl(routeRoomId) ?? undefined,
@@ -319,6 +332,15 @@ export function PlayPage() {
         onError: () => setOnlineConnected(false),
         onEvent: (event: ServerEvent) => {
           if (event.type === 'error_event') {
+            if (event.message === 'not_your_turn') {
+              const now = Date.now();
+              if (now - lastNotYourTurnToastAtRef.current > 1200) {
+                lastNotYourTurnToastAtRef.current = now;
+                pushToast('Not your turn yet.', 'info');
+              }
+              return;
+            }
+
             setOnlineError(event.message);
             pushToast(`Online error: ${event.message}`, 'error');
             return;
@@ -334,16 +356,14 @@ export function PlayPage() {
 
           if (event.type === 'game_started') {
             moveSoundRef.current.play('start');
-            setModal({
-              title: 'Match started',
-              description: 'Both players are ready. Good luck!',
-              emoji: '🚀'
-            });
+            pushToast('Match started. Good luck!', 'success');
           }
 
           if (event.type === 'game_finished') {
-            const yourWin =
-              event.state.winnerColor && event.state.winnerColor === onlineSession.myColor;
+            const myPlayer =
+              event.state.players.find((player) => player.id === onlineSession.playerId) ?? null;
+            const myColor = myPlayer?.color ?? onlineMyColorRef.current ?? onlineSession.myColor;
+            const yourWin = event.state.winnerColor && event.state.winnerColor === myColor;
             setRematchOffer(null);
             setRematchRequestedByMe(false);
             setModal({
@@ -355,8 +375,11 @@ export function PlayPage() {
 
           if (event.type === 'move_applied') {
             const moveColor = event.state.lastMove?.color;
+            const myPlayer =
+              event.state.players.find((player) => player.id === onlineSession.playerId) ?? null;
+            const myColor = myPlayer?.color ?? onlineMyColorRef.current ?? onlineSession.myColor;
             if (moveColor) {
-              moveSoundRef.current.play(moveColor === onlineSession.myColor ? 'self' : 'opponent');
+              moveSoundRef.current.play(moveColor === myColor ? 'self' : 'opponent');
             }
           }
 
@@ -364,15 +387,11 @@ export function PlayPage() {
             setRematchOffer(null);
             setRematchRequestedByMe(false);
             moveSoundRef.current.play('start');
-            setModal({
-              title: 'Rematch started',
-              description: 'Colors swapped. New round is live.',
-              emoji: '🔁'
-            });
+            pushToast('Rematch started. Colors swapped.', 'success');
           }
 
           if (event.type === 'rematch_requested') {
-            const isMine = event.byColor === onlineSession.myColor;
+            const isMine = event.byPlayerId === onlineSession.playerId;
             if (isMine) {
               setRematchRequestedByMe(true);
             } else {
@@ -384,12 +403,37 @@ export function PlayPage() {
           if (event.type === 'rematch_declined') {
             setRematchOffer(null);
             setRematchRequestedByMe(false);
-            if (event.byColor !== onlineSession.myColor) {
+            if (event.byPlayerId !== onlineSession.playerId) {
               pushToast(`${event.byDisplayName} declined the rematch.`, 'error');
             }
           }
 
           if ('state' in event) {
+            const currentColor = onlineMyColorRef.current ?? onlineSession.myColor;
+            const fromPlayerId = onlineSession.playerId
+              ? event.state.players.find((player) => player.id === onlineSession.playerId)
+              : undefined;
+
+            let me = fromPlayerId;
+            if (!me && !onlineSession.playerId) {
+              // Legacy fallback for sessions saved before playerId existed.
+              me = event.state.players.find((player) => player.color === currentColor);
+              if (me) {
+                const resolvedPlayerId = me.id;
+                savePlayerId(onlineSession.roomId, resolvedPlayerId);
+                setOnlineSession((prev) =>
+                  prev && prev.roomId === onlineSession.roomId
+                    ? { ...prev, playerId: resolvedPlayerId }
+                    : prev
+                );
+              }
+            }
+
+            if (me && me.color !== currentColor) {
+              setOnlineMyColor(me.color);
+              savePlayerColor(onlineSession.roomId, me.color);
+            }
+
             setOnlineState(event.state);
             setOnlineError(null);
             if (event.state.status !== 'finished') {
@@ -486,26 +530,28 @@ export function PlayPage() {
     });
   }, [offlineDifficulty, offlineGame, offlinePreferredColor, offlineSavedForFinish]);
 
+  const resolvedOnlineColor = onlineMyColor ?? onlineSession?.myColor ?? null;
+
   const boardState = useMemo(() => {
     if (mode === 'online') {
       const onlineDisabled =
         !onlineState ||
         onlineState.status !== 'active' ||
         Boolean(onlineState.paused) ||
-        !onlineSession ||
-        onlineState.currentTurnColor !== onlineSession.myColor;
+        !resolvedOnlineColor ||
+        onlineState.currentTurnColor !== resolvedOnlineColor;
 
       return {
         board: onlineState?.board ?? emptyBoard(),
         winLine: onlineState?.winLine ?? null,
         disabled: onlineDisabled,
-        previewColor: !onlineDisabled && onlineSession ? onlineSession.myColor : null,
+        previewColor: !onlineDisabled && resolvedOnlineColor ? resolvedOnlineColor : null,
         subtitle: !onlineState
           ? 'Connecting to room...'
           : onlineState.status === 'waiting'
             ? 'Waiting for the second player'
             : onlineState.status === 'active'
-              ? onlineState.currentTurnColor === onlineSession?.myColor
+              ? onlineState.currentTurnColor === resolvedOnlineColor
                 ? 'Your turn'
                 : 'Opponent turn'
               : 'Match finished'
@@ -530,7 +576,7 @@ export function PlayPage() {
               : 'Computer turn'
             : 'Match finished'
     };
-  }, [mode, offlineGame, onlineSession, onlineState]);
+  }, [mode, offlineGame, onlineState, resolvedOnlineColor]);
 
   const onlineStatusText = useMemo(() => {
     if (!onlineSession) return 'Not connected';
@@ -560,11 +606,14 @@ export function PlayPage() {
       });
 
       savePlayerToken(room.roomId, room.playerToken);
+      savePlayerId(room.roomId, room.playerId);
       savePlayerColor(room.roomId, room.yourColor);
       saveInviteUrl(room.roomId, room.inviteUrl);
 
+      setOnlineMyColor(room.yourColor);
       setOnlineSession({
         roomId: room.roomId,
+        playerId: room.playerId,
         playerToken: room.playerToken,
         myColor: room.yourColor,
         inviteUrl: room.inviteUrl,
@@ -599,10 +648,13 @@ export function PlayPage() {
     try {
       const joined = await joinInvite(token, joinDisplayName.trim() || undefined);
       savePlayerToken(joined.roomId, joined.playerToken);
+      savePlayerId(joined.roomId, joined.playerId);
       savePlayerColor(joined.roomId, joined.yourColor);
 
+      setOnlineMyColor(joined.yourColor);
       setOnlineSession({
         roomId: joined.roomId,
+        playerId: joined.playerId,
         playerToken: joined.playerToken,
         myColor: joined.yourColor,
         isHost: false
@@ -649,6 +701,7 @@ export function PlayPage() {
     socketRef.current?.close();
     socketRef.current = null;
     setOnlineSession(null);
+    setOnlineMyColor(null);
     setOnlineState(null);
     setOnlineConnected(false);
     setOnlineError(null);
@@ -933,14 +986,14 @@ export function PlayPage() {
   }
 
   function renderOnlineLiveInfoPanel() {
-    const currentTurn = onlineState?.currentTurnColor ?? onlineSession?.myColor ?? 'red';
+    const currentTurn = onlineState?.currentTurnColor ?? resolvedOnlineColor ?? 'red';
 
     return (
       <div className="space-y-4">
         <div className="panel-block text-sm text-slate-200">
           <p>Connection: {onlineConnected ? 'Online' : 'Offline'}</p>
           <p>Status: {onlineStatusText}</p>
-          <p>Your color: {onlineSession?.myColor.toUpperCase()}</p>
+          <p>Your color: {(resolvedOnlineColor ?? 'red').toUpperCase()}</p>
           {onlineState?.paused ? <p>Game paused: waiting for reconnection.</p> : null}
         </div>
 
